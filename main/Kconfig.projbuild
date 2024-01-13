@@ -1,0 +1,251 @@
+menu "FTP Server Configuration"
+
+	menu "File System Selection"
+
+		config GPIO_RANGE_MAX
+			int
+			default 33 if IDF_TARGET_ESP32
+			default 46 if IDF_TARGET_ESP32S2
+			default 48 if IDF_TARGET_ESP32S3
+			default 18 if IDF_TARGET_ESP32C2
+			default 19 if IDF_TARGET_ESP32C3
+			default 30 if IDF_TARGET_ESP32C6
+
+		choice FILE_SYSTEM
+			prompt "File System Selection"
+			default FLASH
+			help
+				Select File System.
+			config FLASH
+				bool "FAT File System on FLASH"
+				help
+					Use FAT File System on FLASH.
+			config SPI_SDCARD
+				bool "FAT File System on SPI SDCARD"
+				help
+					Use FAT File System on SPI SDCARD.
+			config MMC_SDCARD
+				depends on IDF_TARGET_ESP32 || IDF_TARGET_ESP32S3
+				bool "FAT File System on MMC SDCARD"
+				help
+					Use FAT File System on MMC SDCARD.
+		endchoice
+
+		choice SDMMC_BUS_WIDTH
+			depends on MMC_SDCARD
+			prompt "SD/MMC bus width"
+			default SDMMC_BUS_WIDTH_1
+			help
+				Select the bus width of SD or MMC interface.
+				Note that even if 1 line mode is used, D3 pin of the SD card must have a pull-up resistor connected.
+				Otherwise the card may enter SPI mode, the only way to recover from which is to cycle power to the card.
+
+			config SDMMC_BUS_WIDTH_4
+				bool "4 lines (D0 - D3)"
+
+			config SDMMC_BUS_WIDTH_1
+				bool "1 line (D0)"
+		endchoice
+
+		if SOC_SDMMC_USE_GPIO_MATRIX
+
+			config SDMMC_CMD
+				depends on MMC_SDCARD
+				int "CMD GPIO number"
+				default 35 if IDF_TARGET_ESP32S3
+
+			config SDMMC_CLK
+				depends on MMC_SDCARD
+				int "CLK GPIO number"
+				default 36 if IDF_TARGET_ESP32S3
+
+			config SDMMC_D0
+				depends on MMC_SDCARD
+				int "D0 GPIO number"
+				default 37 if IDF_TARGET_ESP32S3
+
+			if SDMMC_BUS_WIDTH_4
+
+				config SDMMC_D1
+					depends on MMC_SDCARD
+					int "D1 GPIO number"
+					default 38 if IDF_TARGET_ESP32S3
+
+				config SDMMC_D2
+					depends on MMC_SDCARD
+					int "D2 GPIO number"
+					default 33 if IDF_TARGET_ESP32S3
+
+				config SDMMC_D3
+					depends on MMC_SDCARD
+					int "D3 GPIO number"
+					default 34 if IDF_TARGET_ESP32S3
+
+			endif  # EXAMPLE_SDMMC_BUS_WIDTH_4
+
+		endif  # SOC_SDMMC_USE_GPIO_MATRIX
+
+		config SDSPI_MOSI
+			depends on SPI_SDCARD
+			int "MOSI GPIO number"
+			range 0 GPIO_RANGE_MAX
+			default 23 if IDF_TARGET_ESP32
+			default 35 if IDF_TARGET_ESP32S2 || IDF_TARGET_ESP32S3
+			default  1 # C3 and others
+			help
+				GPIO number (IOxx) to SPI MOSI.
+
+		config SDSPI_MISO
+			depends on SPI_SDCARD
+			int "MISO GPIO number"
+			range 0 GPIO_RANGE_MAX
+			default 19 if IDF_TARGET_ESP32
+			default 37 if IDF_TARGET_ESP32S2 || IDF_TARGET_ESP32S3
+			default  3 # C3 and others
+			help
+				GPIO number (IOxx) to SPI MISO.
+
+		config SDSPI_CLK
+			depends on SPI_SDCARD
+			int "CLK GPIO number"
+			range 0 GPIO_RANGE_MAX
+			default 18 if IDF_TARGET_ESP32
+			default 36 if IDF_TARGET_ESP32S2 || IDF_TARGET_ESP32S3
+			default  2 # C3 and others
+			help
+				GPIO number (IOxx) to SPI SCLK.
+
+		config SDSPI_CS
+			depends on SPI_SDCARD
+			int "CS GPIO number"
+			range 0 GPIO_RANGE_MAX
+			default 14 if IDF_TARGET_ESP32
+			default 34 if IDF_TARGET_ESP32S2 || IDF_TARGET_ESP32S3
+			default  4 # C3 and others
+			help
+				GPIO number (IOxx) to SPI CS.
+
+		config SDSPI_POWER
+			depends on SPI_SDCARD
+			int "POWER GPIO number"
+			range -1 GPIO_RANGE_MAX
+			default -1
+			help
+				GPIO number (IOxx) to SPI POWER.
+				When it is -1, the POWER isn't performed.
+
+	endmenu
+
+	menu "WiFi Setting"
+
+		choice WIFI_MODE
+			prompt "Wi-Fi Access mode"
+			default ST_MODE
+			help
+				Select Wi-Fi Access mode.
+			config ST_MODE
+				bool "Station MODE"
+				help
+					Wi-Fi is Station Mode.
+			config AP_MODE
+				bool "Access Point MODE"
+				help
+					Wi-Fi is Access Point Mode.
+		endchoice
+
+		config ESP_WIFI_SSID
+			string "WiFi SSID"
+			default "myssid"
+			help
+				SSID (network name) to connect to.
+
+		config ESP_WIFI_PASSWORD
+			string "WiFi Password"
+			default "mypassword"
+			help
+				WiFi password (WPA or WPA2) to connect to.
+
+		config ESP_MAX_STA_CONN
+			depends on AP_MODE
+			int "Maximum STA connections"
+			default 4
+			help
+				Max number of the STA connects to AP.
+
+		config ESP_MAXIMUM_RETRY
+			depends on ST_MODE
+			int "Maximum retry"
+			default 5
+			help
+				Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
+
+		config MDNS_HOSTNAME
+			depends on ST_MODE
+			string "mDNS Hostname"
+			default "ftp-server"
+			help
+				mDNS Hostname for FTP Server.
+
+		config STATIC_IP
+			depends on ST_MODE
+			bool "Enable Static IP Address"
+			default false
+			help
+				Enable Static IP Address.
+
+		config STATIC_IP_ADDRESS
+			depends on STATIC_IP
+			string "Static IP Address"
+			default "192.168.10.100"
+			help
+				Static IP Address for Station.
+
+		config STATIC_GW_ADDRESS
+			depends on STATIC_IP
+			string "Static GW Address"
+			default "192.168.10.1"
+			help
+				Static GW Address for Station.
+
+		config STATIC_NM_ADDRESS
+			depends on STATIC_IP
+			string "Static Netmask"
+			default "255.255.255.0"
+			help
+				Static Netmask for Statione.
+
+		config NTP_SERVER
+			depends on ST_MODE
+			string "NTP Server"
+			default "pool.ntp.org"
+			help
+				Hostname for NTP Server.
+
+		config LOCAL_TIMEZONE
+			depends on ST_MODE
+			int "Your TimeZone"
+			range -23 23
+			default 0
+			help
+				Your local timezone. When it is 0, Greenwich Mean Time.
+
+	endmenu
+
+
+	menu "FTP Server Setting"
+
+		config FTP_USER
+			string "FTP User Name"
+			default "esp32"
+			help
+				FTP User name for this Server.
+
+		config FTP_PASSWORD
+			string "FTP Password"
+			default "esp32"
+			help
+				FTP Password for this Server.
+
+	endmenu
+
+endmenu
