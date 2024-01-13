@@ -90,6 +90,7 @@ static void printDirectory(char * path) {
 }
 void app_main(void)
 {
+	ESP_LOGI(TAG, "MAX_MEM_LEVEL=%d", MAX_MEM_LEVEL);
 	// Initialize NVS
 	esp_err_t ret;
 	ret = nvs_flash_init();
