@@ -1,5 +1,7 @@
 # esp-idf-zlib
 IDF component registry includes zlib for compression and decompression.   
+https://components.espressif.com/components/espressif/zlib   
+
 However, unfortunately there is no sample code for ESP-IDF.   
 This is example compression and decompression using zlib.   
 
