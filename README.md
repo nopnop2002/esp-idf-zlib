@@ -21,7 +21,7 @@ idf.py flash
 
 # Compress   
 This project uses the FAT file system.   
-Compress 10 bytes of data 10 times and write it to a file.
+Compress 10 bytes of data 10 times and write it to a file.   
 The total size of the data is 150 bytes, but the file size on the FAT file system is 32 bytes.   
 
 # UnCompress   
