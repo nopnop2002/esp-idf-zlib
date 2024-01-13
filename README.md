@@ -17,7 +17,7 @@ idf.py menuconfig
 idf.py flash
 ```
 
-\*There is no MENU ITEM where this application is peculiar.   
+__There is no MENU ITEM where this application is peculiar.__   
 
 # Compress   
 This project uses the FAT file system.   
