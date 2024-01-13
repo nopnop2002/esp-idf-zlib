@@ -21,7 +21,7 @@ __There is no MENU ITEM where this application is peculiar.__
 
 # Compress   
 This project uses the FAT file system.   
-Compress 10 bytes of data 10 times and write it to a file.   
+Compress 10 bytes of data 10 times and write it to a ZIP file.   
 The total size of the data is 150 bytes, but the file size on the FAT file system is 32 bytes.   
 
 # UnCompress   
