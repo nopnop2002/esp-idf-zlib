@@ -1,5 +1,5 @@
-# file
-Demonstration of compressing and decompressing files on SPIFFS.   
+# file   
+Demonstration of compressing and decompressing files residing in SPIFFS.   
 This project uses the SPIFFS file system.   
 
 # Compress   
