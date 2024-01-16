@@ -7,7 +7,7 @@ When using the FAT file system, enable the following line.
 ```
 
 # Compress   
-Write 15 bytes of data to a file using gzwrite.   
+Write 15 bytes of data to a file 10 times using gzwrite.   
 The total size of the data is 150 bytes, but the file size on the FAT file system is 32 bytes.   
 
 # DeCompress   
