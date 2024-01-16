@@ -21,3 +21,4 @@ elseif(IDF_TARGET STREQUAL "esp32h2")
 idf_build_set_property(COMPILE_OPTIONS "-DMAX_MEM_LEVEL=7" APPEND)
 endif()
 
+spiffs_create_partition_image(storage1 files FLASH_IN_PROJECT)

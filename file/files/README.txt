@@ -12,7 +12,7 @@ ESP-IDF V5.x.
 
 ```
 git clone https://github.com/nopnop2002/esp-idf-zlib
-cd esp-idf-zlib/basic
+cd esp-idf-zlib
 idf.py menuconfig
 idf.py flash
 ```
@@ -51,4 +51,3 @@ test test test
 I (670) MAIN: inSize=150 ---> This is the total data size read
 I (750) MAIN: FLASH unmounted
 ```
-

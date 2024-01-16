@@ -1,0 +1,6 @@
+## IDF Component Manager Manifest File
+dependencies:
+  espressif/zlib:
+    version: "^1.3.0"
+    rules:
+      - if: "idf_version >=5.0"
