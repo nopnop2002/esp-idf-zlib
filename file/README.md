@@ -4,11 +4,11 @@ This project uses the SPIFFS file system.
 
 # Compress   
 Compress the file using the comp function.   
-This function was referenced [here](https://www.zlib.net/zpipe.c).
+I used [this](https://www.zlib.net/zpipe.c) as a reference.   
 
 # DeCompress   
 Decompress the file using the decomp function.   
-This function was referenced [here](https://www.zlib.net/zpipe.c).
+I used [this](https://www.zlib.net/zpipe.c) as a reference.   
 
 # Screen Shot   
 ```
