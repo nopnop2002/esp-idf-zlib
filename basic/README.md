@@ -8,10 +8,10 @@ When using the FAT file system, enable the following line.
 
 # Compress   
 Write 15 bytes of data to a file 10 times using gzwrite.   
-The total size of the data is 150 bytes, but the file size on the FAT file system is 32 bytes.   
+The total size of the data is 150 bytes, but the file size on the file system is 32 bytes.   
 
 # DeCompress   
-Read the compressed file using gzread.   
+Read compressed files from the file system using gzread.   
 The total read size is 150 bytes.   
 
 # Screen Shot   
