@@ -17,5 +17,3 @@ idf.py menuconfig
 idf.py flash
 ```
 
-__There is no MENU ITEM where this application is peculiar.__   
-
