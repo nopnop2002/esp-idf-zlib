@@ -6,6 +6,18 @@ When using the FAT file system, enable the following line.
 //#define USE_FAT
 ```
 
+# Installation
+
+```
+git clone https://github.com/nopnop2002/esp-idf-zlib
+cd esp-idf-zlib/basic
+idf.py menuconfig
+idf.py flash
+```
+
+__There is no MENU ITEM where this application is peculiar.__   
+
+
 # Compress   
 Write 15 bytes of data to a file 10 times using gzwrite.   
 The total size of the data is 150 bytes, but the file size on the file system is 32 bytes.   
