@@ -66,3 +66,18 @@ If path_to_input is a compressed text file, this is fine.
 ./zpipe -d < path_to_input
 ```
 
+# Partition Table
+Define Partition Table in partitions_example.csv.   
+When your SoC has 4M Flash, you can expand the partition.   
+The total maximum partition size for a SoC with 4M Flash is 0x2F0000(=3,0008K).   
+storage0 is the storage area for files before compression.   
+And storage1 is the storage area for files after compression.   
+```
+# Name,   Type, SubType, Offset,  Size, Flags
+# Note: if you have increased the bootloader size, make sure to update the offsets to avoid overlap
+nvs,      data, nvs,     0x9000,  0x6000,
+phy_init, data, phy,     0xf000,  0x1000,
+factory,  app,  factory, 0x10000, 1M,
+storage0, data, spiffs,  ,        384K,
+storage1, data, spiffs,  ,        384K,
+```
