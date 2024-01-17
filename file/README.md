@@ -2,6 +2,18 @@
 Demonstration of compressing and decompressing files residing in SPIFFS.   
 This project uses the SPIFFS file system.   
 
+# Installation
+
+```
+git clone https://github.com/nopnop2002/esp-idf-zlib
+cd esp-idf-zlib/basic
+idf.py menuconfig
+idf.py flash
+```
+
+__There is no MENU ITEM where this application is peculiar.__   
+
+
 # Compress   
 Compress the file using the comp function.   
 I used [this](https://www.zlib.net/zpipe.c) as a reference.   
