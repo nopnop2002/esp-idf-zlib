@@ -32,3 +32,4 @@ or
 http://esp32-server.local/
 ```
 
+Drag one file to drop zone and push Compress button.   
