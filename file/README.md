@@ -6,7 +6,7 @@ This project uses the SPIFFS file system.
 
 ```
 git clone https://github.com/nopnop2002/esp-idf-zlib
-cd esp-idf-zlib/basic
+cd esp-idf-zlib/file
 idf.py menuconfig
 idf.py flash
 ```
