@@ -69,7 +69,7 @@ If path_to_input is a compressed text file, this is fine.
 # Partition Table
 Define Partition Table in partitions_example.csv.   
 When your SoC has 4M Flash, you can expand the partition.   
-The total maximum partition size for a SoC with 4M Flash is 0x2F0000(=3,0008K).   
+The total maximum partition size for a SoC with 4M Flash is 0x2F0000(=3,008K).   
 storage0 is the storage area for files before compression.   
 And storage1 is the storage area for files after compression.   
 ```
