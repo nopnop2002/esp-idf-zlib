@@ -1,6 +1,6 @@
 # http_file_server   
 Demonstration of compression and decompression using HTTP Server.   
-This project is based on [this](https://github.com/espressif/esp-idf/tree/master/examples/protocols/http_server/file_serving) sample.   
+This project is based on [this](https://github.com/espressif/esp-idf/tree/master/examples/protocols/http_server/file_serving) example.   
 
 ![http-file-server](https://github.com/nopnop2002/esp-idf-zlib/assets/6020549/915d930d-2651-4277-b8bb-1b110fd4bb45)
 
