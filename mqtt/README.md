@@ -53,6 +53,12 @@ $ vi mqtt-file.py
 Set the broker you will use.
 
 $ python3 mqtt-file.py path_to_host
+- Send source file to ESP32 using mqtt
+- Receiving compressed files from ESP32 using mqtt
+- Delete source files from ESP32
+- Delete compressed files from ESP32
+
+$ ls -l *.dfl
 ```
 
 When the file on the host side is test.txt, a compressed file of test.txt.dfl is created.   
