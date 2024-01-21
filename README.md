@@ -18,13 +18,15 @@ idf.py flash
 ```
 
 # Memory Footprint   
-zlib's memory footprint can also be specified fairly precisely. It is larger for compression than for decompression, and the exact requirements depend on how the library was compiled.   
+zlib's memory footprint can also be specified fairly precisely.   
+It is larger for compression than for decompression, and the exact requirements depend on how the library was compiled.   
 
 The memory requirements for compression depend on two parameters, windowBits and memLevel:   
 
 ```deflate memory usage (bytes) = (1 << (windowBits+2)) + (1 << (memLevel+9)) + 6 KB```
 
-For the default values of 15 and 8, respectively, this is 268 KB, where the approximately 6 KB is for the deflate data structure. Both windowBits and memLevel can be set to lower values at compile time via the MAX_WBITS and MAX_MEM_LEVEL macros, but only at a cost in compression efficiency.   
+For the default values of 15 and 8, respectively, this is 268 KB, where the approximately 6 KB is for the deflate data structure. 
+Both windowBits and memLevel can be set to lower values at compile time via the MAX_WBITS and MAX_MEM_LEVEL macros, but only at a cost in compression efficiency.   
 
 The memory requirements for decompression depend only on windowBits, but this is, in a sense, a harsher limitation: whereas data streams compressed with a smaller window will merely be a bit larger than they would have otherwise, a reduced window size for decompression means that streams compressed with larger windows cannot be decompressed at all. Having said that:   
 
