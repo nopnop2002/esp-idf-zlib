@@ -62,3 +62,21 @@ $ ls -l *.dfl
 ```
 
 When the file on the host side is test.txt, a compressed file of test.txt.dfl is created.   
+
+
+# MQTT Topic
+This project uses the following topics:
+```
+MQTT_PUT_REQUEST="/mqtt/files/put/req"
+MQTT_GET_REQUEST="/mqtt/files/get/req"
+MQTT_LIST_REQUEST="/mqtt/files/list/req"
+MQTT_DELETE_REQUEST="/mqtt/files/delete/req"
+
+MQTT_PUT_RESPONSE="/mqtt/files/put/res"
+MQTT_GET_RESPONSE="/mqtt/files/get/res"
+MQTT_LIST_RESPONSE="/mqtt/files/list/res"
+MQTT_DELETE_RESPONSE="/mqtt/files/delete/res"
+```
+
+When using public brokers, these topics may be used for other purposes.   
+If you want to change the topic to your own, you will need to change both the ESP32 side and the python side.   
