@@ -119,43 +119,10 @@ typedef enum {HEADER, TAILER, DATA} TYPE;
 /* Max length a file path can have on storage */
 #define FILE_PATH_MAX (ESP_VFS_PATH_MAX + CONFIG_SPIFFS_OBJ_NAME_LEN)
 
-static fpos_t getFileSize(char *fullPath) {
-	fpos_t fsize = 0;
-
-	FILE *fp = fopen(fullPath,"rb");
-	ESP_LOGD(TAG, "fullPath=[%s] fp=%p", fullPath, fp);
-	if (fp == NULL) return 0;
-	fseek(fp,0,SEEK_END);
-	fgetpos(fp,&fsize);
-	fclose(fp);
-	ESP_LOGD(TAG, "fgetpos fsize=%ld", fsize);
-	return fsize;
-}
-
-static void printDirectory(char * path) {
-	DIR* dir = opendir(path);
-	assert(dir != NULL);
-	while (true) {
-		struct dirent *pe = readdir(dir);
-		if (!pe) break;
-		if (pe->d_type == 1) {
-			char fullPath[64];
-			strcpy(fullPath, path);
-			strcat(fullPath, "/");
-			strcat(fullPath, pe->d_name);
-			fpos_t fsize = getFileSize(fullPath);
-			ESP_LOGI(__FUNCTION__,"%s d_name=%s d_ino=%d fsize=%ld", path, pe->d_name, pe->d_ino, fsize);
-		}
-		if (pe->d_type == 2) {
-			char subDir[127];
-			sprintf(subDir,"%s%.64s", path, pe->d_name);
-			ESP_LOGI(TAG, "subDir=[%s]", subDir);
-			printDirectory(subDir);
-
-		}
-	}
-	closedir(dir);
-}
+int getFileSize(char *fullPath);
+void printDirectory(char * path);
+esp_err_t query_mdns_host(const char * host_name, char *ip);
+void convert_mdns_host(char * from, char * to);
 
 int process_message(unsigned char *data, int length, char *filename, char *md5) {
 	if (length != 128) return  DATA;
@@ -182,9 +149,6 @@ int process_message(unsigned char *data, int length, char *filename, char *md5) 
 	} 
 	return DATA;
 }
-
-esp_err_t query_mdns_host(const char * host_name, char *ip);
-void convert_mdns_host(char * from, char * to);
 
 void mqtt_sub(void *pvParameters)
 {

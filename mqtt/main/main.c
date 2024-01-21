@@ -213,20 +213,14 @@ esp_err_t mountSPIFFS(char * partition_label, char * mount_point) {
 	return ret;
 }
 
-static fpos_t getFileSize(char *fullPath) {
-	fpos_t fsize = 0;
-
-	FILE *fp = fopen(fullPath,"rb");
-	ESP_LOGD(TAG, "fullPath=[%s] fp=%p", fullPath, fp);
-	if (fp == NULL) return 0;
-	fseek(fp,0,SEEK_END);
-	fgetpos(fp,&fsize);
-	fclose(fp);
-	ESP_LOGD(TAG, "fgetpos fsize=%"PRId32, fsize);
-	return fsize;
+int getFileSize(char *fullPath) {
+	struct stat st;
+	if (stat(fullPath, &st) == 0)
+		return st.st_size;
+	return -1;
 }
 
-static void printDirectory(char * path) {
+void printDirectory(char * path) {
 	DIR* dir = opendir(path);
 	assert(dir != NULL);
 	while (true) {
