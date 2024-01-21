@@ -34,37 +34,6 @@ http://esp32-server.local/
 
 Drag one file to drop zone and push Compress button.   
 
-# How to use zlib on Linux
-
-## Installing zlib on Linux   
-```
-sudo apt install zlib1g-dev
-```
-
-## Testing zlib   
-```
-cc -o test test.c -lz
-./test
-```
-
-## Compress file using zlib
-```
-cc -o zpipe zpipe.c -lz
-./zpipe < path_to_input > path_to_output
-```
-
-zpipe.c is published [here](https://www.zlib.net/zpipe.c).   
-
-## DeCompress file using zlib
-```
-cc -o zpipe zpipe.c -lz
-./zpipe -d < path_to_input > path_to_output
-```
-
-If path_to_input is a compressed text file, this is fine.   
-```
-./zpipe -d < path_to_input
-```
 
 # Partition Table
 Define Partition Table in partitions_example.csv.   
