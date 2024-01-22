@@ -109,7 +109,7 @@ void app_main(void)
 
 	// Mount SPIFFS File System on FLASH
 	char *mount_point = "/root";
-	char *partition_label = "storage1";
+	char *partition_label = "storage";
 	ESP_ERROR_CHECK(mountSPIFFS(partition_label, mount_point));
 
 	// Compress
@@ -117,7 +117,7 @@ void app_main(void)
 	PARAMETER_t param;
 	param.ParentTaskHandle =  xTaskGetCurrentTaskHandle();
 	strcpy(param.srcPath, "/root/README.txt");
-	strcpy(param.dstPath, "/root/README.txt.zip");
+	strcpy(param.dstPath, "/root/README.txt.zlib");
 	param.level = Z_DEFAULT_COMPRESSION;
 	UBaseType_t priority = uxTaskPriorityGet(NULL);
 	xTaskCreate(comp_task, "COMPRESS", 1024*6, (void *)&param, priority, NULL);
@@ -127,7 +127,7 @@ void app_main(void)
 	printDirectory(mount_point);
 
 	// Decompress
-	strcpy(param.srcPath, "/root/README.txt.zip");
+	strcpy(param.srcPath, "/root/README.txt.zlib");
 	strcpy(param.dstPath, "/root/README.txt.txt");
 	xTaskCreate(decomp_task, "DECOMPRESS", 1024*6, (void *)&param, priority, NULL);
 	uint32_t decomp_result = ulTaskNotifyTake( pdTRUE, portMAX_DELAY );

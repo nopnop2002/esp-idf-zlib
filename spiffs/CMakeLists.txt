@@ -28,4 +28,4 @@ idf_build_set_property(COMPILE_OPTIONS "-DMAX_WBITS=14" APPEND)
 idf_build_set_property(COMPILE_OPTIONS "-DMAX_MEM_LEVEL=7" APPEND)
 endif()
 
-spiffs_create_partition_image(storage1 files FLASH_IN_PROJECT)
+spiffs_create_partition_image(storage files FLASH_IN_PROJECT)
