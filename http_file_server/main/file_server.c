@@ -33,6 +33,7 @@
 
 /* Max length a file path can have on storage */
 #define FILE_PATH_MAX (ESP_VFS_PATH_MAX + CONFIG_SPIFFS_OBJ_NAME_LEN)
+#define ZLIB_EXTENSION ".zlib"
 
 /* Max size of an individual file. Make sure this
  * value is same as that set in upload_script.html */
@@ -181,18 +182,27 @@ static esp_err_t http_resp_dir_html(httpd_req_t *req, const char *dirpath, const
 			ESP_LOGE(TAG, "Failed to stat %s : %s", entrytype, entry->d_name);
 			continue;
 		}
+
+		// Obtain file extension
+		char *extension;
+		extension = strrchr(entrypath, '.');
+		if (extension != NULL) {
+			ESP_LOGI(TAG, "extension=[%s]", extension);
+			if (strcmp(extension, ZLIB_EXTENSION) == 0) continue;
+		}
+
 		sprintf(entrysize, "%ld", entry_stat.st_size);
 		ESP_LOGI(TAG, "Found %s : %s (%s bytes)", entrytype, entry->d_name, entrysize);
 
 		int compress = 0;
 		strlcpy(comppath + zippath_len, entry->d_name, sizeof(comppath) - zippath_len);
-		strcat(comppath, ".dfl");
+		strcat(comppath, ZLIB_EXTENSION);
 		ESP_LOGI(TAG, "comppath=[%s]", comppath);
 		if (stat(comppath, &comp_stat) == 0) {
 			compress = 1;
 			sprintf(compsize, "%ld", comp_stat.st_size);
 			strcpy(compfile, entry->d_name);
-			strcat(compfile, ".dfl");
+			strcat(compfile, ZLIB_EXTENSION);
 			ESP_LOGI(TAG, "compsize=[%s]", compsize);
 		}
 
@@ -329,7 +339,7 @@ static esp_err_t download_get_handler(httpd_req_t *req)
 	}
 
 	int ret;
-	if (strstr(filename, ".dfl") != NULL) {
+	if (strstr(filename, ZLIB_EXTENSION) != NULL) {
 		ret = stat(zippath, &file_stat);
 		ESP_LOGI(TAG, "zippath ret=%d", ret);
 	} else {
@@ -351,7 +361,7 @@ static esp_err_t download_get_handler(httpd_req_t *req)
 		return ESP_FAIL;
 	}
 
-	if (strstr(filename, ".dfl") != NULL) {
+	if (strstr(filename, ZLIB_EXTENSION) != NULL) {
 		ESP_LOGI(TAG, "download zip");
 		fd = fopen(zippath, "r");
 	} else {
@@ -563,7 +573,7 @@ static esp_err_t delete_post_handler(httpd_req_t *req)
 	ESP_LOGI(TAG, "zip_path=[%s]", ((struct file_server_data *)req->user_ctx)->zip_path);
 	strcpy(comppath, ((struct file_server_data *)req->user_ctx)->zip_path);
 	strcat(comppath, filename);
-	strcat(comppath, ".dfl");
+	strcat(comppath, ZLIB_EXTENSION);
 	ESP_LOGI(TAG, "comppath=[%s]", comppath);
 	struct stat comp_stat;
 	if (stat(comppath, &comp_stat) == 0) {
@@ -625,7 +635,7 @@ static esp_err_t compress_post_handler(httpd_req_t *req)
 	strcpy(param.srcPath, filepath);
 	strcpy(param.dstPath, ((struct file_server_data *)req->user_ctx)->zip_path);
 	strcat(param.dstPath, filename);
-	strcat(param.dstPath, ".dfl");
+	strcat(param.dstPath, ZLIB_EXTENSION);
 	ESP_LOGI(TAG, "param.srcPath=[%s]", param.srcPath);
 	ESP_LOGI(TAG, "param.dstPath=[%s]", param.dstPath);
 	param.level = Z_DEFAULT_COMPRESSION;
