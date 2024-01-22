@@ -25,7 +25,7 @@ I (452) COMPRESS: param.dstPath=[/root/README.txt.zlib]
 I (502) COMPRESS: Finish
 I (502) MAIN: comp_result=0
 I (502) printDirectory: /root d_name=README.txt d_ino=0 fsize=1417
-I (502) printDirectory: /root d_name=README.txt.zlib d_ino=0 fsize=595 ---> Compress file
+I (502) printDirectory: /root d_name=README.txt.zlib d_ino=0 fsize=595 ---> Compressed file
 I (522) DECOMPRESS: Start
 I (522) DECOMPRESS: param.srcPath=[/root/README.txt.zlib]
 I (522) DECOMPRESS: param.dstPath=[/root/README.txt.txt]
@@ -33,7 +33,7 @@ I (572) DECOMPRESS: Finish
 I (572) MAIN: decomp_result=0
 I (582) printDirectory: /root d_name=README.txt d_ino=0 fsize=1417
 I (582) printDirectory: /root d_name=README.txt.zlib d_ino=0 fsize=595
-I (582) printDirectory: /root d_name=README.txt.txt d_ino=0 fsize=1417 ---> Decompress file
+I (582) printDirectory: /root d_name=README.txt.txt d_ino=0 fsize=1417 ---> Decompressed file
 I (602) MAIN: FLASH unmounted
 I (602) main_task: Returned from app_main()
 ```
