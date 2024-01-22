@@ -25,6 +25,8 @@
 #include "queue.h"
 #include "parameter.h"
 
+#define ZLIB_EXTENSION ".zlib"
+
 QueueHandle_t xQueuePublish;
 QueueHandle_t xQueueSubscribe;
 
@@ -296,7 +298,7 @@ void app_main(void)
 			memset(param.srcPath, 0, sizeof(param.srcPath));
 			strncpy(param.srcPath, queueBuf.payload, queueBuf.payload_len);
 			strcpy(param.dstPath, param.srcPath);
-			strcat(param.dstPath, ".dfl");
+			strcat(param.dstPath, ZLIB_EXTENSION);
 			param.level = Z_DEFAULT_COMPRESSION;
 			UBaseType_t priority = uxTaskPriorityGet(NULL);
 			xTaskCreate(comp_task, "COMPRESS", 1024*6, (void *)&param, priority, NULL);
