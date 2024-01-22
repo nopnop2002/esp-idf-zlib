@@ -153,7 +153,7 @@ void app_main(void)
 	// Compress
 	char fullPath[64];
 	strcpy(fullPath, mount_point);
-	strcat(fullPath, "/out.gz");
+	strcat(fullPath, "/out.zlib");
 
 	// Check if destination file exists before writing
 	struct stat st;

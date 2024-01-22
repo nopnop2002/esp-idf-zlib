@@ -31,7 +31,7 @@ The total read size is 150 bytes.
 I (402) MAIN: Initializing SPIFFS file system
 I (432) MAIN: Partition size: total: 354161, used: 251
 I (492) printDirectory: /root d_name=README.txt d_ino=0 fsize=0
-I (492) printDirectory: /root d_name=out.gz d_ino=0 fsize=32
+I (492) printDirectory: /root d_name=out.zlib d_ino=0 fsize=32
 I (512) MAIN: outSize=150 ---> This is the total data size written
 I (512) MAIN: fileSize=32 ---> This is the file size on the FAT file system
 I (512) MAIN: buf=[test test test
