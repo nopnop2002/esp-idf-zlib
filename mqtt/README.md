@@ -54,14 +54,15 @@ Set the broker you will use.
 
 $ python3 mqtt-file.py path_to_host
 - Send source file to ESP32 using mqtt
+- Compress source file using zlib
 - Receiving compressed files from ESP32 using mqtt
 - Delete source files from ESP32
 - Delete compressed files from ESP32
 
-$ ls -l *.dfl
+$ ls -l *.zlib
 ```
 
-When the file on the host side is test.txt, a compressed file of test.txt.dfl is created.   
+When the file on the host side is test.txt, a compressed file of test.txt.zlib is created.   
 
 
 # MQTT Topic
