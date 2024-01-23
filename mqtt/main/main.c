@@ -290,8 +290,8 @@ void app_main(void)
 			ESP_LOGE(TAG, "xQueueSend fail");
 		}
 
-		if (queueBuf.request == REQUEST_PUT) {
-			// Compress
+		if (queueBuf.request == REQUEST_PUT && queueBuf.responce == RESPONCE_ACK) {
+			// Compress file
 			printDirectory(mount_point);
 			PARAMETER_t param;
 			param.ParentTaskHandle =  xTaskGetCurrentTaskHandle();
