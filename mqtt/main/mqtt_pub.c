@@ -226,7 +226,7 @@ void mqtt_pub(void *pvParameters)
 			ESP_LOGI(TAG, "stat_status=%d", stat_status);
 			//if (stat(filepath, &filestat) != 0) {
 			if (stat_status != 0) {
-				ESP_LOGI(TAG, "%s not found", filepath);
+				ESP_LOGE(TAG, "%s not found", filepath);
 				send_header(mqtt_client, MQTT_GET_RESPONSE, queueBuf.payload, queueBuf.payload_len, RESPONCE_NAK_PAYLOAD, strlen(RESPONCE_NAK_PAYLOAD));
 				memset(md5, 0x00, sizeof(md5));
 				memset(md5, 0x30, sizeof(md5)-1);
@@ -333,7 +333,7 @@ void mqtt_pub(void *pvParameters)
 			int stat_status = stat(filepath, &filestat);
 			ESP_LOGI(TAG, "stat_status=%d", stat_status);
 			if (stat_status != 0) {
-				ESP_LOGI(TAG, "%s not found", filepath);
+				ESP_LOGE(TAG, "%s not found", filepath);
 				send_header(mqtt_client, MQTT_DELETE_RESPONSE, queueBuf.payload, queueBuf.payload_len, RESPONCE_NAK_PAYLOAD, strlen(RESPONCE_NAK_PAYLOAD));
 			} else {
 				ESP_LOGI(TAG, "%s found", filepath);
