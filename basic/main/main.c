@@ -106,8 +106,8 @@ static void printDirectory(char * path) {
 			strcpy(fullPath, path);
 			strcat(fullPath, "/");
 			strcat(fullPath, pe->d_name);
-			fpos_t fsize = getFileSize(fullPath);
-			ESP_LOGI(__FUNCTION__,"%s d_name=%s d_ino=%d fsize=%"PRIi32, path, pe->d_name, pe->d_ino, fsize);
+			int fsize = getFileSize(fullPath);
+			ESP_LOGI(__FUNCTION__,"%s d_name=%s d_ino=%d fsize=%d", path, pe->d_name, pe->d_ino, fsize);
 		}
 		if (pe->d_type == 2) {
 			char subDir[127];
@@ -172,9 +172,9 @@ void app_main(void)
 	}
 	gzclose(outFile);
 	printDirectory(mount_point);
-	fpos_t fileSize = getFileSize(fullPath);
+	int fileSize = getFileSize(fullPath);
 	ESP_LOGI(TAG, "outSize=%d", outSize);
-	ESP_LOGI(TAG, "fileSize=%"PRIi32, fileSize);
+	ESP_LOGI(TAG, "fileSize=%d", fileSize);
 
 	// UnCompress
 	gzFile inFile = gzopen(fullPath,"rb");
