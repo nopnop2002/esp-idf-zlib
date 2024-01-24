@@ -71,3 +71,17 @@ If path_to_input is a compressed text file, this is fine.
 ```
 ./zpipe -d < path_to_input
 ```
+
+
+# Comparison of zlib and brotli
+
+|source file|source size(byte)|brotli comress(byte)|zlib compress(byte)|
+|:-:|:-:|:-:|:-:|
+|test.txt|20479|9470|4571|
+|esp32.jpeg|18753|18613|18218|
+|esp32.png|43540|43640|43264|
+
+# Reference
+
+https://github.com/nopnop2002/esp-idf-brotli
+
