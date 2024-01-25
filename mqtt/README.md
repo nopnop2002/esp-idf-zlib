@@ -45,14 +45,14 @@ Specifies the username and password if the server requires a password when conne
 
 # How to use
 
-Run the following python script on the host side.
+Run the following python script on the host side.   
 ```
 $ python3 -m pip install paho-mqtt
 
-$ vi mqtt-file.py
-Set the broker you will use.
+Default Broker is broker.emqx.io.   
+You can specify a different Broker at startup.   
 
-$ python3 mqtt-file.py path_to_host
+$ python3 mqtt-file.py path_to_host [broker]
 - Send source file to ESP32 using mqtt
 - Compress source file using zlib
 - Receiving compressed files from ESP32 using mqtt
