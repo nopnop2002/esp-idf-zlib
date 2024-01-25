@@ -72,6 +72,17 @@ If path_to_input is a compressed text file, this is fine.
 ./zpipe -d < path_to_input
 ```
 
+# How to use zlib on python
+```
+cd python
+$ python3 zlib.py
+
+# Compress file
+usage python3 zlib.py -c path_to_compress path_to_output
+
+# Decompress file
+usage python3 zlib.py -d path_to_decompress path_to_output
+```
 
 # Comparison of zlib and brotli
 
