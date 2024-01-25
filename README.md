@@ -92,7 +92,7 @@ usage python3 zlib.py -d path_to_decompress path_to_output
 ```
 
 ### Example
-``
+```
 python3 zlib.py -c test.txt test.txt.zlib
 python3 zlib.py -d test.txt.zlib test.txt.txt
 diff test.txt test.txt.txt
