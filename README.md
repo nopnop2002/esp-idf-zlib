@@ -51,13 +51,11 @@ cc -o zpipe zpipe.c -lz
 
 ### Testing zlib   
 ```
-cd esp-idf-zlib/linux
 ./test
 ```
 
 ### Compress file using zlib
 ```
-cd esp-idf-zlib/linux
 ./zpipe < path_to_input > path_to_output
 ```
 
@@ -65,7 +63,6 @@ zpipe.c is published [here](https://www.zlib.net/zpipe.c).
 
 ### Decompress file using zlib
 ```
-cd esp-idf-zlib/linux
 ./zpipe -d < path_to_input > path_to_output
 ```
 
