@@ -44,18 +44,20 @@ In this project, appropriate values are set for each ESP32 SoC.
 ### Installing zlib on Linux   
 ```
 sudo apt install zlib1g-dev
+cd esp-idf-zlib/linux
+cc -o test test.c -lz
+cc -o zpipe zpipe.c -lz
 ```
 
 ### Testing zlib   
 ```
 cd esp-idf-zlib/linux
-cc -o test test.c -lz
 ./test
 ```
 
 ### Compress file using zlib
 ```
-cc -o zpipe zpipe.c -lz
+cd esp-idf-zlib/linux
 ./zpipe < path_to_input > path_to_output
 ```
 
@@ -63,7 +65,7 @@ zpipe.c is published [here](https://www.zlib.net/zpipe.c).
 
 ### Decompress file using zlib
 ```
-cc -o zpipe zpipe.c -lz
+cd esp-idf-zlib/linux
 ./zpipe -d < path_to_input > path_to_output
 ```
 
