@@ -61,7 +61,7 @@ cc -o zpipe zpipe.c -lz
 
 zpipe.c is published [here](https://www.zlib.net/zpipe.c).   
 
-### DeCompress file using zlib
+### Decompress file using zlib
 ```
 cc -o zpipe zpipe.c -lz
 ./zpipe -d < path_to_input > path_to_output
