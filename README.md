@@ -80,7 +80,7 @@ diff zpipe.c zpipe.c.c
 
 # How to use zlib on python
 ```
-cd python
+cd esp-idf-zlib/python
 python3 zlib.py
 
 # Compress file
