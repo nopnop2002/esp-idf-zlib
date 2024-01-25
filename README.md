@@ -41,19 +41,19 @@ In this project, appropriate values are set for each ESP32 SoC.
 
 # How to use zlib on Linux
 
-## Installing zlib on Linux   
+### Installing zlib on Linux   
 ```
 sudo apt install zlib1g-dev
 ```
 
-## Testing zlib   
+### Testing zlib   
 ```
 cd esp-idf-zlib/linux
 cc -o test test.c -lz
 ./test
 ```
 
-## Compress file using zlib
+### Compress file using zlib
 ```
 cc -o zpipe zpipe.c -lz
 ./zpipe < path_to_input > path_to_output
@@ -61,7 +61,7 @@ cc -o zpipe zpipe.c -lz
 
 zpipe.c is published [here](https://www.zlib.net/zpipe.c).   
 
-## DeCompress file using zlib
+### DeCompress file using zlib
 ```
 cc -o zpipe zpipe.c -lz
 ./zpipe -d < path_to_input > path_to_output
@@ -70,6 +70,13 @@ cc -o zpipe zpipe.c -lz
 If path_to_input is a compressed text file, this is fine.   
 ```
 ./zpipe -d < path_to_input
+```
+
+### Example
+```
+./zpipe < zpipe.c > zpipe.z.zlib
+./zpipe -d < zpipe.z.zlib > zpipe.c.c
+diff zpipe.c zpipe.c.c
 ```
 
 # How to use zlib on python
@@ -83,6 +90,14 @@ usage python3 zlib.py -c path_to_compress path_to_output
 # Decompress file
 usage python3 zlib.py -d path_to_decompress path_to_output
 ```
+
+### Example
+``
+python3 zlib.py -c test.txt test.txt.zlib
+python3 zlib.py -d test.txt.zlib test.txt.txt
+diff test.txt test.txt.txt
+```
+
 
 # Comparison of zlib and brotli
 
