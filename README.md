@@ -74,8 +74,8 @@ If path_to_input is a compressed text file, this is fine.
 
 ### Example
 ```
-./zpipe < zpipe.c > zpipe.z.zlib
-./zpipe -d < zpipe.z.zlib > zpipe.c.c
+./zpipe < zpipe.c > zpipe.c.zlib
+./zpipe -d < zpipe.c.zlib > zpipe.c.c
 diff zpipe.c zpipe.c.c
 ```
 
