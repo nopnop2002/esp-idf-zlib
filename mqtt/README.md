@@ -50,7 +50,7 @@ Run the following python script on the host side.
 $ python3 -m pip install paho-mqtt
 
 Default Broker is broker.emqx.io.   
-You can specify a different Broker at startup.   
+You can specify a different broker when starting the script.
 
 $ python3 mqtt-file.py path_to_host [broker]
 - Send source file to ESP32 using mqtt
