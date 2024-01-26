@@ -234,12 +234,11 @@ def main():
 	client.on_publish=on_publish
 	client.puback_flag=False #use flag in publish ack
 	client.mid_value=None
+	__broker = default_broker
 	if args == 3:
-		print("connecting to broker ",argv[2])
-		client.connect(argv[2])#connect
-	else:
-		print("connecting to broker ",default_broker)
-		client.connect(default_broker)#connect
+		__broker = argv[2]
+	print("connecting to broker ",__broker)
+	client.connect(__broker)#connect
 	client.loop_start() #start loop to process received messages
 	global topic_counter
 	topic_counter = 0
