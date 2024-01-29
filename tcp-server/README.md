@@ -22,7 +22,7 @@ You can connect using the mDNS hostname instead of the IP address.
 # How to use
 ESP32 acts as a tcp server.   
 ```
-python3 tcp-client path_to_host [port]
+$ python3 tcp-client.py path_to_host [port]
 - Send source file to ESP32 using TCP/IP
 - Compress source file using zlib
 - Receiving compressed files from ESP32 using TCP/IP
