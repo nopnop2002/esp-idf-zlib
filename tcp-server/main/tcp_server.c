@@ -26,8 +26,8 @@
 #include "parameter.h"
 
 static const char *TAG = "TCP";
-#define RX_BUFFER_SIZE 256
-#define TX_BUFFER_SIZE 3
+#define RX_BUFFER_SIZE 2048
+#define TX_BUFFER_SIZE 2
 #define FILE_PATH_MAX (ESP_VFS_PATH_MAX + CONFIG_SPIFFS_OBJ_NAME_LEN)
 
 #define ZLIB_EXTENSION ".zlib"
@@ -65,22 +65,38 @@ void printDirectory(char * path) {
 }
 
 int receive_socket(int sock, char *rx_buffer, int rx_buffer_size, int flag) {
-	int len;
-	char packet_length;
+	int rx_length;
+	char packet_length[2];
 
 	// Receive packet length
-	len = recv(sock, &packet_length, 1, flag);
-	ESP_LOGD(__FUNCTION__, "len=%d packet_length=%d", len, packet_length);
-	if (len <= 0) return len;
+	rx_length = recv(sock, packet_length, 2, flag);
+	ESP_LOGI(__FUNCTION__, "rx_length=%d", rx_length);
+	if (rx_length == 0) {
+		// Connection closed by peer
+		return rx_length;
+	} else if (rx_length < 0) {
+		ESP_LOGE(__FUNCTION__, "recv failed: errno %d", errno);
+		return rx_length;
+	} else if (rx_length != 2) {
+		ESP_LOGE(__FUNCTION__, "illegal receive length %d", rx_length);
+		return -1;
+	}
+	ESP_LOGD(__FUNCTION__, "packet_length=0x%x-0x%x", packet_length[0], packet_length[1]);
 
 	// Receive packet body
 	int index = 0;
-	int remain_size = packet_length;
+	int remain_size = packet_length[0]*256+packet_length[1];
+	ESP_LOGI(__FUNCTION__, "remain_size=%d", remain_size);
 	while(1) {
-		len = recv(sock, &rx_buffer[index], remain_size, flag);
-		index = index + len;
-		remain_size = remain_size - len;
-		ESP_LOGD(__FUNCTION__, "len=%d index=%d remain_size=%d", len, index, remain_size);
+		rx_length = recv(sock, &rx_buffer[index], remain_size, flag);
+		ESP_LOGD(__FUNCTION__, "rx_length=%d", rx_length);
+		if (rx_length <= 0) {
+			ESP_LOGE(__FUNCTION__, "recv failed: errno %d", errno);
+			return rx_length;
+		}
+		index = index + rx_length;
+		remain_size = remain_size - rx_length;
+		ESP_LOGI(__FUNCTION__, "rx_length=%d index=%d remain_size=%d", rx_length, index, remain_size);
 		if (remain_size == 0) break;
 	}
 	return index;
@@ -88,7 +104,7 @@ int receive_socket(int sock, char *rx_buffer, int rx_buffer_size, int flag) {
 
 // File copy from Host to SPIFFS
 void put_file(int sock, char *filepath) {
-	char rx_buffer[RX_BUFFER_SIZE];
+	char rx_buffer[RX_BUFFER_SIZE+1];
 	char tx_buffer[TX_BUFFER_SIZE];
 	char md5[33];
 	FILE *file = NULL;
@@ -98,10 +114,10 @@ void put_file(int sock, char *filepath) {
 
 	while (1) {
 		//int rx_length = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
-		int rx_length = receive_socket(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
+		int rx_length = receive_socket(sock, rx_buffer, RX_BUFFER_SIZE, 0);
 		// Error occurred during receiving
-		if (rx_length < 0) {
-			ESP_LOGE(__FUNCTION__, "recv failed: errno %d", errno);
+		if (rx_length <= 0) {
+			ESP_LOGE(__FUNCTION__, "receive_socket failed: %d", rx_length);
 			break;
 		}
 
@@ -116,14 +132,14 @@ void put_file(int sock, char *filepath) {
 			file = fopen(filepath, "wb");
 			if (file == NULL) {
 				ESP_LOGE(__FUNCTION__, "Failed to open file for writing");
-				strcpy(tx_buffer, "NG");
+				memcpy(tx_buffer, "NG", 2);
 			} else {
 				fileOpen = 1;
 				fileSize = 0;
 				esp_rom_md5_init(&context);
-				strcpy(tx_buffer, "OK");
+				memcpy(tx_buffer, "OK", 2);
 			}
-			int err = send(sock, tx_buffer, strlen(tx_buffer), 0);
+			int err = send(sock, tx_buffer, 2, 0);
 			if (err < 0) {
 				ESP_LOGE(__FUNCTION__, "Error occurred during sending: errno %d", errno);
 				break;
@@ -155,17 +171,17 @@ void put_file(int sock, char *filepath) {
 				// Compare md5
 				if (strcmp(md5, hexdigest) == 0) {
 					ESP_LOGI(__FUNCTION__, "File copied OK - valid hash");
-					strcpy(tx_buffer, "OK");
+					memcpy(tx_buffer, "OK", 2);
 				} else {
 					ESP_LOGE(__FUNCTION__, "File copied NG - invalid hash");
-					strcpy(tx_buffer, "NG");
+					memcpy(tx_buffer, "NG", 2);
 				}
 				file = NULL;
 				fileOpen = 0;
 			} else {
-				strcpy(tx_buffer, "NG");
+				memcpy(tx_buffer, "NG", 2);
 			}
-			int err = send(sock, tx_buffer, strlen(tx_buffer), 0);
+			int err = send(sock, tx_buffer, 2, 0);
 			if (err < 0) {
 				ESP_LOGE(__FUNCTION__, "Error occurred during sending: errno %d", errno);
 				break;
@@ -180,15 +196,15 @@ void put_file(int sock, char *filepath) {
 				int ret = fwrite(rx_buffer, rx_length, 1, file);
 				if (ret != 1) {
 					ESP_LOGE(__FUNCTION__, "Failed to write file");
-					strcpy(tx_buffer, "NG");
+					memcpy(tx_buffer, "NG", 2);
 				} else {
 					// Update md5
 					fileSize = fileSize + rx_length;
 					esp_rom_md5_update(&context, rx_buffer, rx_length);
-					strcpy(tx_buffer, "OK");
+					memcpy(tx_buffer, "OK", 2);
 				}
 			}
-			int err = send(sock, tx_buffer, strlen(tx_buffer), 0);
+			int err = send(sock, tx_buffer, 2, 0);
 			if (err < 0) {
 				ESP_LOGE(__FUNCTION__, "Error occurred during sending: errno %d", errno);
 				break;
@@ -199,9 +215,14 @@ void put_file(int sock, char *filepath) {
 }
 
 int send_packet(int sock, char *tx_buffer, int tx_length) {
-	char packet_length[1];
-	packet_length[0] = tx_length;
-	int err = send(sock, packet_length, 1, 0);
+	ESP_LOGD(__FUNCTION__, "tx_length=%d", tx_length);
+	char _packet_length[2];
+	memcpy(_packet_length, (char*)&tx_length, 2);
+	char packet_length[2];
+	packet_length[0] = _packet_length[1];
+	packet_length[1] = _packet_length[0];
+	ESP_LOGD(__FUNCTION__, "packet_length=0x%x-0x%x", packet_length[0], packet_length[1]);
+	int err = send(sock, packet_length, 2, 0);
 	if (err < 0) {
 		ESP_LOGE(__FUNCTION__, "Error occurred during sending: errno %d", errno);
 		return err;
@@ -215,14 +236,15 @@ int send_packet(int sock, char *tx_buffer, int tx_length) {
 
 	// Waiting response
 	char rx_buffer[TX_BUFFER_SIZE];
-	int rx_length = receive_socket(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
-	ESP_LOGI(__FUNCTION__, "rx_length=%d", rx_length);
+	//int rx_length = receive_socket(sock, rx_buffer, 2, 0);
+	int rx_length = recv(sock, rx_buffer, 2, 0);
+	ESP_LOGD(__FUNCTION__, "rx_length=%d", rx_length);
 	// Error occurred during receiving
-	if (rx_length < 0) {
-		ESP_LOGE(__FUNCTION__, "recv failed: errno %d", errno);
+	if (rx_length != 2) {
+		ESP_LOGE(__FUNCTION__, "receive_socket failed: %d", rx_length);
 		return rx_length;
 	}
-	return 0;
+	return tx_length;
 }
 
 int send_header(int sock, int filesize)
@@ -234,8 +256,9 @@ int send_header(int sock, int filesize)
 	int filesizeLen = sprintf(filesizeChar, "%d", filesize);
 	memcpy(&tx_buffer[8], filesizeChar, filesizeLen);
 
-	send_packet(sock, tx_buffer, 128);
-	return 0;
+	int ret = send_packet(sock, tx_buffer, 128);
+	ESP_LOGI(__FUNCTION__, "send_packet ret=%d", ret);
+	return ret;
 }
 
 int send_tailer(int sock, char *md5)
@@ -245,8 +268,9 @@ int send_tailer(int sock, char *md5)
 	memcpy(&tx_buffer[0], "tailer", 6);
 	memcpy(&tx_buffer[8], md5, strlen(md5));
 
-	send_packet(sock, tx_buffer, 128);
-	return 0;
+	int ret = send_packet(sock, tx_buffer, 128);
+	ESP_LOGI(__FUNCTION__, "send_packet ret=%d", ret);
+	return ret;
 }
 
 // File copy from SPIFFS to Host
@@ -257,7 +281,12 @@ void get_file(int sock, char *filepath) {
 		return;
 	}
 	
-	send_header(sock, st.st_size);
+	int ret = send_header(sock, st.st_size);
+	ESP_LOGI(__FUNCTION__, "send_header ret=%d", ret);
+	if (ret <= 0) {
+		ESP_LOGE(__FUNCTION__, "send_header fail %d", ret);
+		return;
+	}
 	FILE *file = fopen(filepath, "rb");
 	if (file == NULL) {
 		ESP_LOGE(__FUNCTION__, "Failed to open file for writing");
@@ -269,10 +298,14 @@ void get_file(int sock, char *filepath) {
 	esp_rom_md5_init(&context);
 	int fileSize = 0;
 	while(1) {
-		int ret = fread(tx_buffer, 1, RX_BUFFER_SIZE-1, file);
+		int ret = fread(tx_buffer, 1, RX_BUFFER_SIZE, file);
 		ESP_LOGI(TAG, "fread rer=%d", ret);
 		if (ret == 0) break;
-		send_packet(sock, tx_buffer, ret);
+		ret = send_packet(sock, tx_buffer, ret);
+		if (ret <= 0) {
+			ESP_LOGE(__FUNCTION__, "send_packet fail %d", ret);
+			return;
+		}
 		esp_rom_md5_update(&context, tx_buffer, ret);
 		fileSize = fileSize + ret;
 	}
@@ -290,7 +323,11 @@ void get_file(int sock, char *filepath) {
 		strcat(hexdigest, work);
 	}
 	ESP_LOGI(TAG, "hexdigest=[%s]", hexdigest);
-	send_tailer(sock, hexdigest);
+	ret = send_tailer(sock, hexdigest);
+	if (ret <= 0) {
+		ESP_LOGE(__FUNCTION__, "send_tailer fail %d", ret);
+		return;
+	}
 }
 
 // Delete file from SPIFFS
@@ -307,25 +344,24 @@ void del_file(int sock, char *filepath) {
 void comp_task(void *pvParameters);
 
 void receive_command(struct sockaddr_in6 source_addr, int sock, char *mount_point) {
-	char rx_buffer[RX_BUFFER_SIZE];
+	char rx_buffer[RX_BUFFER_SIZE+1];
 	char tx_buffer[TX_BUFFER_SIZE];
 	char filepath[FILE_PATH_MAX];
 	char addr_str[128];
 
 	while (1) {
 		//int rx_length = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
-		int rx_length = receive_socket(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
+		int rx_length = receive_socket(sock, rx_buffer, RX_BUFFER_SIZE, 0);
+		ESP_LOGI(__FUNCTION__, "rx_length=%d", rx_length);
 		// Error occurred during receiving
-		if (rx_length < 0) {
-			ESP_LOGE(__FUNCTION__, "recv failed: errno %d", errno);
-			break;
-		}
-		// Connection closed by client
-		else if (rx_length == 0) {
+		if (rx_length == 0) {
 			ESP_LOGI(__FUNCTION__, "Connection closed");
 			break;
+		} else if (rx_length < 0) {
+			ESP_LOGE(__FUNCTION__, "receive_socket failed: %d", rx_length);
+			break;
 		}
-		// Data received
+		// Receive payload
 		// Get the sender's ip address as string
 		if (source_addr.sin6_family == PF_INET) {
 			inet_ntoa_r(((struct sockaddr_in *)&source_addr)->sin_addr.s_addr, addr_str, sizeof(addr_str) - 1);
@@ -338,8 +374,8 @@ void receive_command(struct sockaddr_in6 source_addr, int sock, char *mount_poin
 		ESP_LOGI(__FUNCTION__, "Received %d bytes from %s:", rx_length, addr_str);
 		ESP_LOGI(__FUNCTION__, "[%s]", rx_buffer);
 
-		strcpy(tx_buffer, "OK");
-		int err = send(sock, tx_buffer, strlen(tx_buffer), 0);
+		memcpy(tx_buffer, "OK", 2);
+		int err = send(sock, tx_buffer, 2, 0);
 		if (err < 0) {
 			ESP_LOGE(__FUNCTION__, "Error occurred during sending: errno %d", errno);
 			break;

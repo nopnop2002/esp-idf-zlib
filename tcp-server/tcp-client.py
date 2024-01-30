@@ -18,49 +18,72 @@ def usage(name):
 	print("usage python3 {} path_to_host [port]".format(name))
 
 def send_command(client, command):
-	client.send(array.array('B', [len(command)]))
+	# Send packet length
+	length = len(command)
+	bytes = length.to_bytes(2, 'big')
+	client.send(array.array('B', bytes))
+
+	# Send packet body
 	client.send(command)
-	response = str(client.recv(1024), 'utf-8')
+
+	# Receive response
+	response = str(client.recv(2), 'utf-8')
 	print("response={}".format(response))
 	return response
 
 def send_data(client, data, datalen):
-	client.send(array.array('B', [datalen]))
+	# Send packet length
+	bytes = datalen.to_bytes(2, 'big')
+	client.send(array.array('B', bytes))
+
+	# Send packet body
 	data_array = array.array('B', list(data))
 	client.send(data_array)
-	response = str(client.recv(1024), 'utf-8')
+
+	# Receive response
+	response = str(client.recv(2), 'utf-8')
 	print("response={}".format(response))
 	return response
 
-def send_header(client, filesize, header_block_size):
-	client.send(array.array('B', [header_block_size]))
+def send_header(client, filesize, block_size):
+	# Send packet length
+	bytes = block_size.to_bytes(2, 'big')
+	client.send(array.array('B', bytes))
 
+	# Send packet body
 	header="header"+",,"+filesize
 	header=bytearray(header,"utf-8")
-	header.extend(b','*(header_block_size-len(header)))
+	header.extend(b','*(block_size-len(header)))
 	client.send(header)
-	response = str(client.recv(1024), 'utf-8')
+
+	# Receive response
+	response = str(client.recv(2), 'utf-8')
 	print("response={}".format(response))
 	return response
 
-def send_tailer(client, hash, tailer_block_size):
-	client.send(array.array('B', [tailer_block_size]))
+def send_tailer(client, hash, block_size):
+	# Send packet length
+	bytes = block_size.to_bytes(2, 'big')
+	client.send(array.array('B', bytes))
 
+	# Send packet body
 	tailer="tailer"+",,"+hash
 	tailer=bytearray(tailer,"utf-8")
-	tailer.extend(b','*(tailer_block_size-len(tailer)))
+	tailer.extend(b','*(block_size-len(tailer)))
 	client.send(tailer)
-	response = str(client.recv(1024), 'utf-8')
+
+	# Receive response
+	response = str(client.recv(2), 'utf-8')
 	print("response={}".format(response))
 	return response
 
 def send_ok(client):
-	client.send(array.array('B', [2]))
-
+	# Send packet body
 	payload="OK"
-	payload=bytearray(payload,"utf-8")
+	payload=bytearray(payload, "utf-8")
 	client.send(payload)
 
+# Send file to Server
 def put_file(client, filename):
 	command = "put_file,{}".format(filename)
 	command = bytes(command, 'utf-8')
@@ -74,7 +97,7 @@ def put_file(client, filename):
 	if response != "OK":
 		return
 
-	size = 255
+	size = 2048
 	with open(filename, 'rb') as f:
 		while True:
 			data = f.read(size)
@@ -89,6 +112,7 @@ def put_file(client, filename):
 
 	response = send_tailer(client, out_hash_md5.hexdigest(), HEADER_SIZE)
 
+# Compress file on server
 def compress(client, filename):
 	command = "compress,{}".format(filename)
 	command = bytes(command, 'utf-8')
@@ -116,6 +140,7 @@ def process_message(msg):
 	else:
 		return MessageType.DATA.value
 
+# Receive file from Server
 def get_file(client, filename):
 	command = "get_file,{}".format(filename)
 	command = bytes(command, 'utf-8')
@@ -125,27 +150,34 @@ def get_file(client, filename):
 	
 	while True:
 		# Receive packet length
-		payload = client.recv(1)
-		#print("payload={}".format(payload))
-		#print("len={}".format(len(payload)))
-		if (len(payload) != 1):
+		payload = client.recv(2)
+		# print("payload={}".format(payload))
+		# print("len={}".format(len(payload)))
+		if (len(payload) != 2):
 			print("Illegal packet length")
 			print("payload={}".format(payload))
 			print("payload length={}".format(len(payload)))
 			break
-		packet_length = int.from_bytes(payload, 'big')
-		print("packet_length={}".format(packet_length))
+		remain_length = int.from_bytes(payload, 'big')
+		print("remain_length={}".format(remain_length))
 
 		# Receive packet body
-		payload = client.recv(packet_length)
-		if (len(payload) != packet_length):
-			print("Illegal packet body")
-			print("payload={}".format(payload))
-			print("payload length={}".format(len(payload)))
-			break
+		payload = b''
+		while True:
+			chunk = client.recv(remain_length)
+			payload = payload + chunk
+			remain_length = remain_length - len(chunk)
+			# print("len(chunk)={}".format(len(chunk)))
+			# print("len(payload)={}".format(len(payload)))
+			# print("remain_length={}".format(remain_length))
+			if (remain_length == 0):
+				break;
 
+		# Determine message type
 		message_type = process_message(payload)
 		print("message_type={}".format(message_type))
+
+		# Open file
 		if (message_type == MessageType.HEADER.value):
 			print(payload)
 			msg_in = str(payload, 'utf-8')
@@ -155,6 +187,8 @@ def get_file(client, filename):
 			start_time = time.time()
 			file_size = 0
 			send_ok(client)
+
+		# Close file
 		elif message_type == MessageType.TAILER.value:
 			print(payload)
 			msg_in = str(payload, 'utf-8')
@@ -174,12 +208,15 @@ def get_file(client, filename):
 			print("took ",time_taken)
 			send_ok(client)
 			break
+
+		# Write file
 		else:
 			in_hash_md5.update(payload)
 			fout.write(payload)
 			file_size = file_size + len(payload)
 			send_ok(client)
 
+# Delete file from Server
 def del_file(client, filename):
 	command = "del_file,{}".format(filename)
 	command = bytes(command, 'utf-8')
