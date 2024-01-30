@@ -28,6 +28,7 @@
 static const char *TAG = "TCP";
 #define RX_BUFFER_SIZE 2048
 #define TX_BUFFER_SIZE 2
+#define BLOCK_SIZE 128
 #define FILE_PATH_MAX (ESP_VFS_PATH_MAX + CONFIG_SPIFFS_OBJ_NAME_LEN)
 
 #define ZLIB_EXTENSION ".zlib"
@@ -54,7 +55,7 @@ void printDirectory(char * path) {
 			ESP_LOGI(__FUNCTION__,"%s d_name=%s d_ino=%d fsize=%d", path, pe->d_name, pe->d_ino, fsize);
 		}
 		if (pe->d_type == 2) {
-			char subDir[127];
+			char subDir[128];
 			sprintf(subDir,"%s%.64s", path, pe->d_name);
 			ESP_LOGI(TAG, "subDir=[%s]", subDir);
 			printDirectory(subDir);
@@ -102,15 +103,35 @@ int receive_socket(int sock, char *rx_buffer, int rx_buffer_size, int flag) {
 	return index;
 }
 
+int send_ok(int sock) {
+	char tx_buffer[2];
+	memcpy(tx_buffer, "OK", 2);
+	int err = send(sock, tx_buffer, 2, 0);
+	if (err < 0) {
+		ESP_LOGE(__FUNCTION__, "Error occurred during sending: errno %d", errno);
+	}
+	return err;
+}
+
+int send_ng(int sock) {
+	char tx_buffer[2];
+	memcpy(tx_buffer, "NG", 2);
+	int err = send(sock, tx_buffer, 2, 0);
+	if (err < 0) {
+		ESP_LOGE(__FUNCTION__, "Error occurred during sending: errno %d", errno);
+	}
+	return err;
+}
+
 // File copy from Host to SPIFFS
 void put_file(int sock, char *filepath) {
 	char rx_buffer[RX_BUFFER_SIZE+1];
-	char tx_buffer[TX_BUFFER_SIZE];
 	char md5[33];
 	FILE *file = NULL;
 	int fileOpen = 0;
 	int fileSize = 0;
 	struct MD5Context context;
+	int tx_length;
 
 	while (1) {
 		//int rx_length = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
@@ -132,17 +153,14 @@ void put_file(int sock, char *filepath) {
 			file = fopen(filepath, "wb");
 			if (file == NULL) {
 				ESP_LOGE(__FUNCTION__, "Failed to open file for writing");
-				memcpy(tx_buffer, "NG", 2);
+				tx_length = send_ng(sock);
+				if (tx_length < 0) break;
 			} else {
 				fileOpen = 1;
 				fileSize = 0;
 				esp_rom_md5_init(&context);
-				memcpy(tx_buffer, "OK", 2);
-			}
-			int err = send(sock, tx_buffer, 2, 0);
-			if (err < 0) {
-				ESP_LOGE(__FUNCTION__, "Error occurred during sending: errno %d", errno);
-				break;
+				tx_length = send_ok(sock);
+				if (tx_length < 0) break;
 			}
 		} // end header
 
@@ -171,20 +189,18 @@ void put_file(int sock, char *filepath) {
 				// Compare md5
 				if (strcmp(md5, hexdigest) == 0) {
 					ESP_LOGI(__FUNCTION__, "File copied OK - valid hash");
-					memcpy(tx_buffer, "OK", 2);
+					tx_length = send_ok(sock);
+					if (tx_length < 0) break;
 				} else {
 					ESP_LOGE(__FUNCTION__, "File copied NG - invalid hash");
-					memcpy(tx_buffer, "NG", 2);
+					tx_length = send_ng(sock);
+					if (tx_length < 0) break;
 				}
 				file = NULL;
 				fileOpen = 0;
 			} else {
-				memcpy(tx_buffer, "NG", 2);
-			}
-			int err = send(sock, tx_buffer, 2, 0);
-			if (err < 0) {
-				ESP_LOGE(__FUNCTION__, "Error occurred during sending: errno %d", errno);
-				break;
+				tx_length = send_ng(sock);
+				if (tx_length < 0) break;
 			}
 			break;
 		} // end tailer
@@ -196,18 +212,15 @@ void put_file(int sock, char *filepath) {
 				int ret = fwrite(rx_buffer, rx_length, 1, file);
 				if (ret != 1) {
 					ESP_LOGE(__FUNCTION__, "Failed to write file");
-					memcpy(tx_buffer, "NG", 2);
+					tx_length = send_ng(sock);
+					if (tx_length < 0) break;
 				} else {
 					// Update md5
 					fileSize = fileSize + rx_length;
 					esp_rom_md5_update(&context, rx_buffer, rx_length);
-					memcpy(tx_buffer, "OK", 2);
+					tx_length = send_ok(sock);
+					if (tx_length < 0) break;
 				}
-			}
-			int err = send(sock, tx_buffer, 2, 0);
-			if (err < 0) {
-				ESP_LOGE(__FUNCTION__, "Error occurred during sending: errno %d", errno);
-				break;
 			}
 		} // end data
 
@@ -215,13 +228,11 @@ void put_file(int sock, char *filepath) {
 }
 
 int send_packet(int sock, char *tx_buffer, int tx_length) {
-	ESP_LOGD(__FUNCTION__, "tx_length=%d", tx_length);
-	char _packet_length[2];
-	memcpy(_packet_length, (char*)&tx_length, 2);
+	ESP_LOGI(__FUNCTION__, "tx_length=%d", tx_length);
 	char packet_length[2];
-	packet_length[0] = _packet_length[1];
-	packet_length[1] = _packet_length[0];
-	ESP_LOGD(__FUNCTION__, "packet_length=0x%x-0x%x", packet_length[0], packet_length[1]);
+	packet_length[0] = tx_length >> 8;
+	packet_length[1] = tx_length & 0xff;
+	ESP_LOGI(__FUNCTION__, "packet_length=0x%x-0x%x", packet_length[0], packet_length[1]);
 	int err = send(sock, packet_length, 2, 0);
 	if (err < 0) {
 		ESP_LOGE(__FUNCTION__, "Error occurred during sending: errno %d", errno);
@@ -249,39 +260,34 @@ int send_packet(int sock, char *tx_buffer, int tx_length) {
 
 int send_header(int sock, int filesize)
 {
-	char tx_buffer[128];
-	memset(tx_buffer, 0x2C, 128); // fill canma
+	char tx_buffer[BLOCK_SIZE];
+	memset(tx_buffer, 0x2C, BLOCK_SIZE); // fill canma
 	memcpy(&tx_buffer[0], "header", 6);
 	char filesizeChar[16];
 	int filesizeLen = sprintf(filesizeChar, "%d", filesize);
 	memcpy(&tx_buffer[8], filesizeChar, filesizeLen);
 
-	int ret = send_packet(sock, tx_buffer, 128);
+	int ret = send_packet(sock, tx_buffer, BLOCK_SIZE);
 	ESP_LOGI(__FUNCTION__, "send_packet ret=%d", ret);
 	return ret;
 }
 
 int send_tailer(int sock, char *md5)
 {
-	char tx_buffer[128];
-	memset(tx_buffer, 0x2C, 128); // fill canma
+	char tx_buffer[BLOCK_SIZE];
+	memset(tx_buffer, 0x2C, BLOCK_SIZE); // fill canma
 	memcpy(&tx_buffer[0], "tailer", 6);
 	memcpy(&tx_buffer[8], md5, strlen(md5));
 
-	int ret = send_packet(sock, tx_buffer, 128);
+	int ret = send_packet(sock, tx_buffer, BLOCK_SIZE);
 	ESP_LOGI(__FUNCTION__, "send_packet ret=%d", ret);
 	return ret;
 }
 
 // File copy from SPIFFS to Host
 void get_file(int sock, char *filepath) {
-	struct stat st;
-	if (stat(filepath, &st) != 0) {
-		ESP_LOGE(__FUNCTION__, "file not found [%s]", filepath);
-		return;
-	}
-	
-	int ret = send_header(sock, st.st_size);
+	int filesize = getFileSize(filepath);
+	int ret = send_header(sock, filesize);
 	ESP_LOGI(__FUNCTION__, "send_header ret=%d", ret);
 	if (ret <= 0) {
 		ESP_LOGE(__FUNCTION__, "send_header fail %d", ret);
@@ -332,11 +338,6 @@ void get_file(int sock, char *filepath) {
 
 // Delete file from SPIFFS
 void del_file(int sock, char *filepath) {
-	struct stat st;
-	if (stat(filepath, &st) != 0) {
-		ESP_LOGE(__FUNCTION__, "file not found [%s]", filepath);
-		return;
-	}
 	ESP_LOGI(__FUNCTION__, "unlink [%s]", filepath);
 	unlink(filepath);
 }
@@ -345,9 +346,10 @@ void comp_task(void *pvParameters);
 
 void receive_command(struct sockaddr_in6 source_addr, int sock, char *mount_point) {
 	char rx_buffer[RX_BUFFER_SIZE+1];
-	char tx_buffer[TX_BUFFER_SIZE];
 	char filepath[FILE_PATH_MAX];
 	char addr_str[128];
+	int tx_length;
+	struct stat st;
 
 	while (1) {
 		//int rx_length = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
@@ -374,13 +376,6 @@ void receive_command(struct sockaddr_in6 source_addr, int sock, char *mount_poin
 		ESP_LOGI(__FUNCTION__, "Received %d bytes from %s:", rx_length, addr_str);
 		ESP_LOGI(__FUNCTION__, "[%s]", rx_buffer);
 
-		memcpy(tx_buffer, "OK", 2);
-		int err = send(sock, tx_buffer, 2, 0);
-		if (err < 0) {
-			ESP_LOGE(__FUNCTION__, "Error occurred during sending: errno %d", errno);
-			break;
-		}
-
 		char *adr = strchr(rx_buffer, (int)',');
 		ESP_LOGI(__FUNCTION__, "filename=[%s]", adr+1);
 		memset(filepath, 0, sizeof(filepath));
@@ -391,34 +386,60 @@ void receive_command(struct sockaddr_in6 source_addr, int sock, char *mount_poin
 
 		// Receive file from Host
 		if (strncmp(rx_buffer, "put_file", 8) == 0) {
+			tx_length = send_ok(sock);
+			if (tx_length < 0) break;
 			put_file(sock, filepath);
 			printDirectory(mount_point);
 
 		// Send file to Host
 		} else if (strncmp(rx_buffer, "get_file", 8) == 0) {
-			get_file(sock, filepath);
+			if (stat(filepath, &st) == 0) {
+				tx_length = send_ok(sock);
+				if (tx_length < 0) break;
+				get_file(sock, filepath);
+			} else {
+				ESP_LOGE(__FUNCTION__, "file not found [%s]", filepath);
+				tx_length = send_ng(sock);
+				if (tx_length < 0) break;
+			}
 
 		// Delete file from SPIFFS
 		} else if (strncmp(rx_buffer, "del_file", 8) == 0) {
-			printDirectory(mount_point);
-			del_file(sock, filepath);
-			printDirectory(mount_point);
+			if (stat(filepath, &st) == 0) {
+				tx_length = send_ok(sock);
+				if (tx_length < 0) break;
+				printDirectory(mount_point);
+				del_file(sock, filepath);
+				printDirectory(mount_point);
+			} else {
+				ESP_LOGE(__FUNCTION__, "file not found [%s]", filepath);
+				tx_length = send_ng(sock);
+				if (tx_length < 0) break;
+			}
 
 		// Compress file on SPIFFS
 		} else if (strncmp(rx_buffer, "compress", 8) == 0) {
-			printDirectory(mount_point);
-			PARAMETER_t param;
-			param.ParentTaskHandle =  xTaskGetCurrentTaskHandle();
-			strcpy(param.srcPath, filepath);
-			strcpy(param.dstPath, param.srcPath);
-			strcat(param.dstPath, ZLIB_EXTENSION);
-			param.level = Z_DEFAULT_COMPRESSION;
-			UBaseType_t priority = uxTaskPriorityGet(NULL);
-			xTaskCreate(comp_task, "COMPRESS", 1024*6, (void *)&param, priority, NULL);
-			uint32_t comp_result = ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
-			ESP_LOGI(TAG, "comp_result=%"PRIi32, comp_result);
-			if (comp_result != 0) vTaskDelete(NULL);
-			printDirectory(mount_point);
+			if (stat(filepath, &st) == 0) {
+				tx_length = send_ok(sock);
+				if (tx_length < 0) break;
+				printDirectory(mount_point);
+				PARAMETER_t param;
+				param.ParentTaskHandle =  xTaskGetCurrentTaskHandle();
+				strcpy(param.srcPath, filepath);
+				strcpy(param.dstPath, param.srcPath);
+				strcat(param.dstPath, ZLIB_EXTENSION);
+				param.level = Z_DEFAULT_COMPRESSION;
+				UBaseType_t priority = uxTaskPriorityGet(NULL);
+				xTaskCreate(comp_task, "COMPRESS", 1024*6, (void *)&param, priority, NULL);
+				uint32_t comp_result = ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
+				ESP_LOGI(TAG, "comp_result=%"PRIi32, comp_result);
+				if (comp_result != 0) break;
+				printDirectory(mount_point);
+			} else {
+				ESP_LOGE(__FUNCTION__, "file not found [%s]", filepath);
+				tx_length = send_ng(sock);
+				if (tx_length < 0) break;
+			}
 
 		}
 

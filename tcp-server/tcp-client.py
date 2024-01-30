@@ -29,6 +29,7 @@ def send_command(client, command):
 	# Receive response
 	response = str(client.recv(2), 'utf-8')
 	print("response={}".format(response))
+	if (response != "OK"): sys.exit()
 	return response
 
 def send_data(client, data, datalen):
@@ -43,6 +44,7 @@ def send_data(client, data, datalen):
 	# Receive response
 	response = str(client.recv(2), 'utf-8')
 	print("response={}".format(response))
+	if (response != "OK"): sys.exit()
 	return response
 
 def send_header(client, filesize, block_size):
@@ -59,6 +61,7 @@ def send_header(client, filesize, block_size):
 	# Receive response
 	response = str(client.recv(2), 'utf-8')
 	print("response={}".format(response))
+	if (response != "OK"): sys.exit()
 	return response
 
 def send_tailer(client, hash, block_size):
@@ -75,11 +78,18 @@ def send_tailer(client, hash, block_size):
 	# Receive response
 	response = str(client.recv(2), 'utf-8')
 	print("response={}".format(response))
+	if (response != "OK"): sys.exit()
 	return response
 
 def send_ok(client):
 	# Send packet body
 	payload="OK"
+	payload=bytearray(payload, "utf-8")
+	client.send(payload)
+
+def send_ng(client):
+	# Send packet body
+	payload="NG"
 	payload=bytearray(payload, "utf-8")
 	client.send(payload)
 
