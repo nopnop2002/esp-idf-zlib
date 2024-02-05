@@ -37,7 +37,7 @@ The memory requirements for decompression depend only on windowBits, but this is
 Typically, therefore, inflate() requires no more than 40 KB of storage on a 64-bit machine. This includes the 32768-byte sliding window and approximately 7 KB for the inflate data structure.   
 
 The MAX_WBITS and MAX_MEM_LEVEL macros can be specified as compile options.   
-In this project, appropriate values are set for each ESP32 SoC.   
+In this project, appropriate values are set for each ESP32 SoC in CMakeLists.txt.   
 
 # How to use zlib on Linux
 
