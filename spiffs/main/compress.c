@@ -160,11 +160,13 @@ void comp_task(void *pvParameters) {
 	ESP_LOGI(pcTaskGetName(NULL), "Start");
 	ESP_LOGI(pcTaskGetName(NULL), "param.srcPath=[%s]", param.srcPath);
 	ESP_LOGI(pcTaskGetName(NULL), "param.dstPath=[%s]", param.dstPath);
+	ESP_LOGI(pcTaskGetName(NULL), "param.level=[%d]", param.level);
 
 	// Compress
 	FILE* src = fopen(param.srcPath, "r");
 	FILE* dst = fopen(param.dstPath, "w");
-	int result = comp(src, dst, Z_DEFAULT_COMPRESSION);
+	//int result = comp(src, dst, Z_DEFAULT_COMPRESSION);
+	int result = comp(src, dst, param.level);
 	if (result != 0) ESP_LOGE(pcTaskGetName(NULL), "comp=%d", result);
 	fclose(src);
 	fclose(dst);
