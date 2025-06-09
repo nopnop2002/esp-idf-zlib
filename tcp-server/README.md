@@ -25,7 +25,7 @@ You can use tcp-client.py as a TCP client.
 ```
 $ cp main/main.c test.txt
 
-$ python3 tcp-client.py text.txt [port]
+$ python3 tcp-client.py test.txt [port]
 - Send source file to ESP32 using TCP/IP
 - Compress source file using zlib
 - Receiving compressed files from ESP32 using TCP/IP
