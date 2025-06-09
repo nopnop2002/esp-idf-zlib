@@ -20,14 +20,21 @@ You can connect using the mDNS hostname instead of the IP address.
 
 
 # How to use
-ESP32 acts as a tcp server.   
+The ESP32 acts as a TCP server.   
+You can use tcp-client.py as a TCP client.   
 ```
-$ python3 tcp-client.py path_to_host [port]
+$ cp main/main.c test.txt
+
+$ python3 tcp-client.py text.txt [port]
 - Send source file to ESP32 using TCP/IP
 - Compress source file using zlib
 - Receiving compressed files from ESP32 using TCP/IP
 - Delete source files from ESP32
 - Delete compressed files from ESP32
 
-$ ls -l *.zlib
+$ ls -l test.txt
+-rw-rw-r-- 1 nop nop 6657  6ŒŽ  9 16:11 test.txt
+
+$ ls -l test.txt.zlib
+-rw-rw-r-- 1 nop nop 2543  6ŒŽ  9 16:11 test.txt.zlib
 ```
