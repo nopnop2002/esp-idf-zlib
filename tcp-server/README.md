@@ -33,8 +33,8 @@ $ python3 tcp-client.py text.txt [port]
 - Delete compressed files from ESP32
 
 $ ls -l test.txt
--rw-rw-r-- 1 nop nop 6657  6ŒŽ  9 16:11 test.txt
+-rw-rw-r-- 1 nop nop 6657 Jun  9 16:14 test.txt
 
 $ ls -l test.txt.zlib
--rw-rw-r-- 1 nop nop 2543  6ŒŽ  9 16:11 test.txt.zlib
+-rw-rw-r-- 1 nop nop 2543 Jun  9 16:19 test.txt.zlib
 ```
