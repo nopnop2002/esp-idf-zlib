@@ -10,8 +10,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include <string.h>
-#include <sys/unistd.h>
-#include <sys/stat.h>
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_err.h"
@@ -97,6 +96,7 @@ void decomp_task(void *pvParameters);
 
 void app_main(void)
 {
+	ESP_LOGI(TAG, "MAX_WBITS=%d", MAX_WBITS);
 	ESP_LOGI(TAG, "MAX_MEM_LEVEL=%d", MAX_MEM_LEVEL);
 	// Initialize NVS
 	esp_err_t ret;
@@ -120,7 +120,7 @@ void app_main(void)
 	strcpy(param.dstPath, "/root/README.txt.zlib");
 	param.level = Z_DEFAULT_COMPRESSION;
 	UBaseType_t priority = uxTaskPriorityGet(NULL);
-	xTaskCreate(comp_task, "COMPRESS", 1024*6, (void *)&param, priority, NULL);
+	xTaskCreate(&comp_task, "COMPRESS", 1024*6, (void *)&param, priority, NULL);
 	uint32_t comp_result = ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
 	ESP_LOGI(TAG, "comp_result=%"PRIi32, comp_result);
 	if (comp_result != 0) vTaskDelete(NULL);
@@ -129,7 +129,7 @@ void app_main(void)
 	// Decompress
 	strcpy(param.srcPath, "/root/README.txt.zlib");
 	strcpy(param.dstPath, "/root/README.txt.txt");
-	xTaskCreate(decomp_task, "DECOMPRESS", 1024*6, (void *)&param, priority, NULL);
+	xTaskCreate(&decomp_task, "DECOMPRESS", 1024*6, (void *)&param, priority, NULL);
 	uint32_t decomp_result = ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
 	ESP_LOGI(TAG, "decomp_result=%"PRIi32, decomp_result);
 	printDirectory(mount_point);
