@@ -32,7 +32,7 @@ global topic_subscribe
 #username = 'user'
 #password = 'password'
 
-client= paho.Client("client-001")
+client= paho.Client(paho.CallbackAPIVersion.VERSION2, "client-001")
 mqtt_qos=1
 
 #Change to enable when using password authentication
@@ -139,7 +139,7 @@ def on_message(client, userdata, message):
 			payload=message.payload.decode('utf-8')
 			print("filename={}".format(payload))
 
-def on_publish(client, userdata, mid):
+def on_publish(client, userdata, mid, reason_codes, properties):
 	#logging.debug("pub ack "+ str(mid))
 	client.mid_value=mid
 	client.puback_flag=True
