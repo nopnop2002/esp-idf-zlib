@@ -66,9 +66,6 @@ $ ls -l sdkconfig.zlib
 -rw-rw-r-- 1 nop nop 15243 Jan  4 11:33 sdkconfig.zlib
 ```
 
-When the file on the host side is test.txt, a compressed file of test.txt.zlib is created.   
-
-
 # MQTT Topic
 This project uses the following topics:
 ```
